@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, condecimal
+from pydantic import BaseModel, condecimal, root_validator
 from datetime import date, datetime
 
 
@@ -28,15 +28,20 @@ class BookkeepingBase(BaseModel):
 
 
 class BookkeepingUpdate(BookkeepingBase):
-    pass
+
+    @root_validator(pre=False)
+    def set_month(cls, values):
+        values['month'] = values['trade_at'].strftime('%Y-%m')
+        return values
 
 
-class BookkeepingCreate(BookkeepingBase):
+class BookkeepingCreate(BookkeepingUpdate):
     pass
 
 
 class Bookkeeping(BookkeepingBase):
     id: int
+    month: Optional[str] = None
     data_created_at: Optional[DateTimeFmt] = None
     data_updated_at: Optional[DateTimeFmt] = None
 

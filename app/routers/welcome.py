@@ -27,6 +27,16 @@ async def query(db: Session = Depends(database.client),
     return {'total': total, 'data': data}
 
 
+@router.get("/summary")
+async def summary(db: Session = Depends(database.client),
+                  current_user: schemas.CurrentUser = Depends(get_current_user)
+                  ):
+    """
+        Query bookkeeping summary
+    """
+    filter = {'data_created_by': current_user.id}
+    return database.crud.bookkeeping.summary(db, filter=filter)
+
 @router.post("/", response_model=schemas.Bookkeeping)
 async def create(payload: schemas.BookkeepingCreate,
                  db: Session = Depends(database.client),
@@ -59,5 +69,5 @@ async def update(id: int,
                  ):
     filter = {'id': id, 'data_created_by': current_user.id}
     updated_bookkeeping = database.crud.bookkeeping.update(
-        db, filter=filter, payload=payload)
+        db, filter=filter, payload=payload.dict())
     return updated_bookkeeping

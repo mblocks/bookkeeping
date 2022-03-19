@@ -79,9 +79,12 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         skip: int = 0,
         limit: int = None,
         order_by: str = None,
+        group_by: str = None,
     ) -> List[ModelType]:
         query = self._query_data(
             db, filter=filter, select=select, select_alias=select_alias)
+        if group_by:
+            query = query.group_by(expression.text(group_by))
         if order_by:
             query = query.order_by(expression.text(order_by))
         if limit is not None:
