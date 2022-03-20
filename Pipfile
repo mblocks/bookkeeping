@@ -15,6 +15,7 @@ xlwt = "*"
 [dev-packages]
 pytest = "*"
 autopep8 = "*"
+requests = "*"
 
 [requires]
 python_version = "3.8"
