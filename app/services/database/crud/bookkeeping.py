@@ -29,5 +29,17 @@ class CRUDBookkeeping(CRUDBase[Bookkeeping, BookkeepingCreate, BookkeepingUpdate
                               )
         return {'total': total, 'data': data, 'trend': trend}
 
+    def batch(self, db: Session, *, data, filter):
+        inserted = 0
+        updated = 0
+        for item in data:
+            if item.id:
+                super().update(db, filter={**filter,'id':item.id}, payload=item, commit=False, refresh=False)
+                updated += 1
+            else:
+                super().create(db=db, payload={**item.dict(exclude_unset=True),**filter}, commit=False, refresh=False)
+                inserted += 1
+        db.commit()
+        return {'result':True, 'inserted': inserted, 'updated': updated}
 
 bookkeeping = CRUDBookkeeping(Bookkeeping)

@@ -28,15 +28,18 @@ class BookkeepingBase(BaseModel):
 
 
 class BookkeepingUpdate(BookkeepingBase):
-
-    @root_validator(pre=False)
-    def set_month(cls, values):
-        values['month'] = values['trade_at'].strftime('%Y-%m')
-        return values
+    pass
 
 
 class BookkeepingCreate(BookkeepingUpdate):
     pass
+
+
+class BookkeepingImport(BookkeepingUpdate):
+    id: Optional[int] = None
+
+    class Config:
+        orm_mode = True
 
 
 class Bookkeeping(BookkeepingBase):
