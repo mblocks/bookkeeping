@@ -8,7 +8,7 @@ from .base import CRUDBase
 class CRUDBookkeeping(CRUDBase[Bookkeeping, BookkeepingCreate, BookkeepingUpdate]):
     def summary(self, db: Session, *, filter):
         total = super().get(db,
-                            filter=filter,
+                            filter={**filter, 'type':'income'},
                             select_alias={'total': 'sum(amount)'},
                             )
         data = super().query(db,
@@ -21,10 +21,10 @@ class CRUDBookkeeping(CRUDBase[Bookkeeping, BookkeepingCreate, BookkeepingUpdate
                              )
         trend = super().query(db,
                               filter=filter,
-                              select=['month'],
+                              select=['month','type'],
                               select_alias={'amount': 'sum(amount)'},
-                              order_by='month asc',
-                              group_by='month',
+                              order_by='month desc',
+                              group_by='month, type',
                               limit=50
                               )
         return {'total': total.total, 'data': data, 'trend': trend}
