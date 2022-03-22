@@ -1,4 +1,6 @@
 from typing import Optional, List
+from enum import Enum
+from unicodedata import category
 from pydantic import BaseModel, condecimal, root_validator
 from datetime import date, datetime
 
@@ -23,6 +25,7 @@ class BookkeepingBase(BaseModel):
     type: str
     trade_at: Optional[date] = None
     amount: condecimal(decimal_places=2)
+    category: Optional[str] = None
     item: str
     owner: str
 
@@ -55,3 +58,9 @@ class Bookkeeping(BookkeepingBase):
 class BookkeepingList(BaseModel):
     data: Optional[List[Bookkeeping]] = []
     total: Optional[int] = 0
+
+
+class BookkeepingStatistics(str, Enum):
+    owner = "owner"
+    item = "item"
+    category = "category"

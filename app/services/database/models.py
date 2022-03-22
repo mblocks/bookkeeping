@@ -11,6 +11,7 @@ class Bookkeeping(Base):
     _trade_at = Column('trade_at', DateTime().with_variant(String(10), "sqlite"))  # nopep8
     month = Column(String(10))
     amount = Column(DECIMAL(scale=2).with_variant(Float, "sqlite"))
+    category = Column(String(100))
     item = Column(String(100))
     owner = Column("owner", String(100))
 

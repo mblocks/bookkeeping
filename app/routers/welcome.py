@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, File, UploadFile
 from sqlalchemy.orm import Session
 from app import schemas
@@ -14,15 +15,19 @@ async def query(db: Session = Depends(database.client),
                 current_user: schemas.CurrentUser = Depends(get_current_user),
                 page: int = Query(1, ge=1),
                 page_size: int = Query(10, ge=1, le=100),
+                category: Optional[str] = None,
+                item: Optional[str] = None,
+                trade_start: Optional[str] = None,
+                trade_end: Optional[str] = None,
                 total: int = None
                 ):
     """
         Query bookkeeping
     """
-    filter = {'data_created_by': current_user.id}
+    filter = {'data_created_by': current_user.id, 'category': category, 'item': item, 'trade_at >=': trade_start, 'trade_at <=': trade_end}
     skip = (page - 1) * page_size
     limit = page_size
-    data = database.crud.bookkeeping.query(db, filter=filter, skip=skip, limit=limit)  # nopep8
+    data = database.crud.bookkeeping.query(db, filter=filter, skip=skip, limit=limit, order_by='trade_at desc')  # nopep8
     if not total:
         total = database.crud.bookkeeping.count(db, filter=filter)
     return {'total': total, 'data': data}
@@ -39,18 +44,42 @@ async def summary(db: Session = Depends(database.client),
     return database.crud.bookkeeping.summary(db, filter=filter)
 
 
+@router.get("/statistics")
+async def statistics(name: Optional[List[schemas.BookkeepingStatistics]] = Query(None),
+                        db: Session = Depends(database.client),
+                        current_user: schemas.CurrentUser = Depends(get_current_user),
+                  ):
+    """
+        Query bookkeeping statistic
+    """
+    result = {}
+    for i in name:
+        items = database.crud.bookkeeping.query(db,
+                                                filter={'data_created_by': current_user.id},
+                                                select=[i.value],
+                                                select_alias={'count':'count(*)'},
+                                                group_by=i.value,
+                                                order_by='count desc',
+                                                )
+        result[i.value] = [{'count':item.count,'name':getattr(item,i.value)} for item in items]
+    return result
+
+
 @router.get("/export")
 async def export_excel(db: Session = Depends(database.client),
-                       current_user: schemas.CurrentUser = Depends(
-                           get_current_user)
+                       current_user: schemas.CurrentUser = Depends(get_current_user),
+                       category: Optional[str] = None,
+                       item: Optional[str] = None,
+                       trade_start: Optional[str] = None,
+                       trade_end: Optional[str] = None,
                        ):
     """
         Export bookkeeping data to excel
     """
-    filter = {'data_created_by': current_user.id}
-    columns = ['id', 'month', 'trade_at', 'type', 'item',
+    filter = {'data_created_by': current_user.id, 'category': category, 'item': item, 'trade_at >=': trade_start, 'trade_at <=': trade_end}
+    columns = ['id', 'month', 'trade_at', 'type', 'category','item',
                'owner', 'amount', 'data_created_at', 'data_updated_at']
-    data = database.crud.bookkeeping.query(db, select=columns, filter=filter)
+    data = database.crud.bookkeeping.query(db, select=columns, filter=filter, order_by='trade_at desc')
     return list_to_xls(name='bookkeepings.xls', columns=columns, data=data)
 
 
@@ -63,7 +92,7 @@ async def import_excel(file: UploadFile = File(...),
         Import excel upadte bookkeeping
     """
     filter = {'data_created_by': current_user.id}
-    columns = ['id', 'month', 'trade_at', 'type', 'item',
+    columns = ['id', 'month', 'trade_at', 'type', 'category','item',
                'owner', 'amount', 'data_created_at', 'data_updated_at']
     result, data = xls_to_list(await file.read(), mapper={v: v for v in columns})
     schema_data = [schemas.BookkeepingImport(**item) for item in data]

@@ -13,21 +13,21 @@ class CRUDBookkeeping(CRUDBase[Bookkeeping, BookkeepingCreate, BookkeepingUpdate
                             )
         data = super().query(db,
                              filter=filter,
-                             select=['owner', 'item'],
-                             select_alias={'total': 'sum(amount)'},
-                             order_by='total desc',
-                             group_by='bookkeeping_owner,bookkeeping_item',
+                             select=['owner', 'category'],
+                             select_alias={'amount': 'sum(amount)'},
+                             order_by='amount desc',
+                             group_by='bookkeeping_owner,bookkeeping_category',
                              limit=5
                              )
         trend = super().query(db,
                               filter=filter,
                               select=['month'],
-                              select_alias={'total': 'sum(amount)'},
+                              select_alias={'amount': 'sum(amount)'},
                               order_by='month asc',
                               group_by='month',
                               limit=50
                               )
-        return {'total': total, 'data': data, 'trend': trend}
+        return {'total': total.total, 'data': data, 'trend': trend}
 
     def batch(self, db: Session, *, data, filter):
         inserted = 0
