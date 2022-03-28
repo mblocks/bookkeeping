@@ -13,10 +13,10 @@ class CRUDBookkeeping(CRUDBase[Bookkeeping, BookkeepingCreate, BookkeepingUpdate
                             )
         data = super().query(db,
                              filter=filter,
-                             select=['owner', 'category'],
+                             select=['owner','type','category'],
                              select_alias={'amount': 'sum(amount)'},
                              order_by='amount desc',
-                             group_by='bookkeeping_owner,bookkeeping_category',
+                             group_by='bookkeeping_owner,bookkeeping_type,bookkeeping_category',
                              limit=5
                              )
         trend = super().query(db,
